@@ -2,75 +2,64 @@
 # Mental Health Fitness Tracker
 The Mental Health Fitness Tracker project focuses on analyzing and predicting mental fitness levels of individuals from various countries with different mental disorders. It utilizes regression techniques to provide insights into mental health and make predictions based on the available data.
 
-
-## INSTALLATION
-
-To use the code and run the examples, follow these steps:
-
-1. Ensure that you have Python 3.x installed on your system.
-2. Install the required libraries by running the following command:
-
-```bash
-pip install pandas numpy matplotlib seaborn scikit-learn xgboost
-```
-    
-3. Download the project files and navigate to the project directory.
+Download the project files and navigate to the project directory.
    
-## USAGE
 
-1. IMPORT THE NECESSARY LIBRARIES
+THEN
+
+IMPORT THE NECESSARY LIBRARIES
 
 ```bash
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+%matplotlib inline
+import plotly.express  as px
 import seaborn as sns
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegressi from sklearn.svm import SVR
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegre from sklearn.preprocessing import PolynomialFeatures
-from sklearn.metrics import mean_squared_error, r2_score
-from xgboost import XGBRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neural_network import MLPRegressor
+import warnings
+import pickle
+warnings.filterwarnings("ignore")
 ```
-2. READ THE DATA FROM THE CSV FILES
+READ THE DATA FROM THE CSV FILES
 
 ```bash
-df1 = pd.read_csv('mental-and-substance-use-as-share-of-disease.csv')
-df2 = pd.read_csv('prevalence-by-mental-and-substance-use-disorder.csv')
+df = pd.read_csv('mental-disorders-countrywise.csv')
+uf = pd.read_csv('every_mental_disorder_countrywise.csv')
 ```
 
-3. FILL MISSING VALUES IN NUMERIC COLUMNS OF DATAFRAMES df1 AND df2 WITH THE MEAN OF THEIR RESPECTIVE COLUMNS
+FILL MISSING VALUES IN NUMERIC COLUMNS OF DATAFRAMES df1 AND df2 WITH THE MEAN OF THEIR RESPECTIVE COLUMNS
 
 ```bash
-numeric_columns = df1.select_dtypes(include=[np.number]).columns
-df1[numeric_columns] = df1[numeric_columns].fillna(df1[numeric_columns].mean())
+numeric_columns = df.select_dtypes(include=[np.number]).columns
+df[numeric_columns] = df[numeric_columns].fillna(df[numeric_columns].mean())
 
-numeric_columns = df2.select_dtypes(include=[np.number]).columns
-df2[numeric_columns] = df2[numeric_columns].fillna(df2[numeric_columns].mean())
+numeric_columns = uf.select_dtypes(include=[np.number]).columns
+uf[numeric_columns] = uf[numeric_columns].fillna(uf[numeric_columns].mean())
 ```
 
-4. CONVERT DATA TYPES
+CONVERT DATA TYPES
 
 ```bash
-df1['DALYs (Disability-Adjusted Life Years) - Mental disorders - Sex: Both - Age: All Ages (Percent)'] = df1['DALYs (Disability-Adjusted Life Years) - Mental disorders - Sex: Both - Age: All Ages (Percent)'].astype(float)
-df2['Schizophrenia disorders (share of population) - Sex: Both - Age: Age-standardized'] = df2['Schizophrenia disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
-df2['Bipolar disorders (share of population) - Sex: Both - Age: Age-standardized'] = df2['Bipolar disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
-df2['Eating disorders (share of population) - Sex: Both - Age: Age-standardized'] = df2['Eating disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
-df2['Anxiety disorders (share of population) - Sex: Both - Age: Age-standardized'] = df2['Anxiety disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
-df2['Prevalence - Drug use disorders - Sex: Both - Age: Age-standardized (Percent)'] = df2['Prevalence - Drug use disorders - Sex: Both - Age: Age-standardized (Percent)'].astype(float)
-df2['Depressive disorders (share of population) - Sex: Both - Age: Age-standardized'] = df2['Depressive disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
-df2['Prevalence - Alcohol use disorders - Sex: Both - Age: Age-standardized (Percent)'] = df2['Prevalence - Alcohol use disorders - Sex: Both - Age: Age-standardized (Percent)'].astype(float)
+df['DALYs (Disability-Adjusted Life Years) - Mental disorders - Sex: Both - Age: All Ages (Percent)'] = df['DALYs (Disability-Adjusted Life Years) - Mental disorders - Sex: Both - Age: All Ages (Percent)'].astype(float)
+uf['Schizophrenia disorders (share of population) - Sex: Both - Age: Age-standardized'] = uf['Schizophrenia disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
+uf['Bipolar disorders (share of population) - Sex: Both - Age: Age-standardized'] = uf['Bipolar disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
+uf['Eating disorders (share of population) - Sex: Both - Age: Age-standardized'] = uf['Eating disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
+uf['Anxiety disorders (share of population) - Sex: Both - Age: Age-standardized'] = uf['Anxiety disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
+uf['Prevalence - Drug use disorders - Sex: Both - Age: Age-standardized (Percent)'] = uf['Prevalence - Drug use disorders - Sex: Both - Age: Age-standardized (Percent)'].astype(float)
+uf['Depressive disorders (share of population) - Sex: Both - Age: Age-standardized'] = uf['Depressive disorders (share of population) - Sex: Both - Age: Age-standardized'].astype(float)
+uf['Prevalence - Alcohol use disorders - Sex: Both - Age: Age-standardized (Percent)'] = uf['Prevalence - Alcohol use disorders - Sex: Both - Age: Age-standardized (Percent)'].astype(float)
 ```
 
-5. MERGE THE TWO DATAFRAMES ON A COMMON COLUMN
+MERGE THE TWO DATAFRAMES ON A COMMON COLUMN
 
 ```bash
-merged_df = pd.merge(df1, df2, on=['Entity', 'Code', 'Year'])
+merged_df = pd.merge(df, uf, on=['Entity', 'Code', 'Year'])
 ```
 
-6. FEATURE THE MATRIX X AND THE VARIABLE y
+FEATURE THE MATRIX X AND THE VARIABLE y
 
 ```bash
 X = merged_df[['Schizophrenia disorders (share of population) - Sex: Both - Age: Age-standardized',
@@ -84,13 +73,13 @@ X = merged_df[['Schizophrenia disorders (share of population) - Sex: Both - Age:
 y = merged_df['DALYs (Disability-Adjusted Life Years) - Mental disorders - Sex: Both - Age: All Ages (Percent)']
 ```
 
-7. SPLIT THE DATA INTO TRAINING AND TESTING SETS
+SPLIT THE DATA INTO TRAINING AND TESTING SETS
 
 ```bash
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 ```
 
-8. VISUALISING THE CORRELATION HEATMAP OF DISEASES AND MENTAL FITNESS
+VISUALISING THE CORRELATION HEATMAP OF DISEASES AND MENTAL FITNESS
 
 ```bash
 # Compute the correlation matrix
@@ -113,20 +102,20 @@ plt.yticks(rotation=0)
 plt.show()
 ```
 
-9. FIT THE LINEAR REGRESSION MODEL
+FIT THE LINEAR REGRESSION MODEL
     
 ```bash
 model = LinearRegression()
 model.fit(X_train, y_train)
 ```
 
-10. MAKE A PREDICTION USING TRAINED MODEL
+MAKE A PREDICTION USING TRAINED MODEL
 
 ```bash
 y_pred = model.predict(X_test)
 ```
 
-11. PRINTING MODEL PERFOMANCE METRICS
+PRINTING MODEL PERFOMANCE METRICS
 
 ```bash
 # Create a dictionary to store the model performance
@@ -148,32 +137,13 @@ lasso_mse = mean_squared_error(y_test, lasso_y_pred)
 lasso_r2 = r2_score(y_test, lasso_y_pred)
 model_performance['2. Lasso Regression'] = {'MSE': lasso_mse, 'R-squared': lasso_r2}
 
-# Elastic Net Regression
-elastic_net_model = ElasticNet(alpha=0.5, l1_ratio=0.5)
-elastic_net_model.fit(X_train, y_train)
-elastic_net_y_pred = elastic_net_model.predict(X_test)
-elastic_net_mse = mean_squared_error(y_test, elastic_net_y_pred)
-elastic_net_r2 = r2_score(y_test, elastic_net_y_pred)
-model_performance['3. Elastic Net Regression'] = {'MSE': elastic_net_mse, 'R-squared': elastic_net_r2}
-
-# Polynomial Regression
-poly_features = PolynomialFeatures(degree=2)
-X_poly = poly_features.fit_transform(X_train)
-poly_model = LinearRegression()
-poly_model.fit(X_poly, y_train)
-X_test_poly = poly_features.transform(X_test)
-poly_y_pred = poly_model.predict(X_test_poly)
-poly_mse = mean_squared_error(y_test, poly_y_pred)
-poly_r2 = r2_score(y_test, poly_y_pred)
-model_performance['4. Polynomial Regression'] = {'MSE': poly_mse, 'R-squared': poly_r2}
-
 # Decision Tree Regression
 tree_model = DecisionTreeRegressor()
 tree_model.fit(X_train, y_train)
 tree_y_pred = tree_model.predict(X_test)
 tree_mse = mean_squared_error(y_test, tree_y_pred)
 tree_r2 = r2_score(y_test, tree_y_pred)
-model_performance['5. Decision Tree Regression'] = {'MSE': tree_mse, 'R-squared': tree_r2}
+model_performance['3. Decision Tree Regression'] = {'MSE': tree_mse, 'R-squared': tree_r2}
 
 # Random Forest Regression
 forest_model = RandomForestRegressor()
@@ -181,23 +151,7 @@ forest_model.fit(X_train, y_train)
 forest_y_pred = forest_model.predict(X_test)
 forest_mse = mean_squared_error(y_test, forest_y_pred)
 forest_r2 = r2_score(y_test, forest_y_pred)
-model_performance['6. Random Forest Regression'] = {'MSE': forest_mse, 'R-squared': forest_r2}
-
-# SVR (Support Vector Regression)
-svr_model = SVR()
-svr_model.fit(X_train, y_train)
-svr_y_pred = svr_model.predict(X_test)
-svr_mse = mean_squared_error(y_test, svr_y_pred)
-svr_r2 = r2_score(y_test, svr_y_pred)
-model_performance['7. Support Vector Regression'] = {'MSE': svr_mse, 'R-squared': svr_r2}
-
-# XGBoost Regression
-xgb_model = XGBRegressor()
-xgb_model.fit(X_train, y_train)
-xgb_y_pred = xgb_model.predict(X_test)
-xgb_mse = mean_squared_error(y_test, xgb_y_pred)
-xgb_r2 = r2_score(y_test, xgb_y_pred)
-model_performance['8. XGBoost Regression'] = {'MSE': xgb_mse, 'R-squared': xgb_r2}
+model_performance['4. Random Forest Regression'] = {'MSE': forest_mse, 'R-squared': forest_r2}
 
 # K-Nearest Neighbors Regression
 knn_model = KNeighborsRegressor()
@@ -205,15 +159,7 @@ knn_model.fit(X_train, y_train)
 knn_y_pred = knn_model.predict(X_test)
 knn_mse = mean_squared_error(y_test, knn_y_pred)
 knn_r2 = r2_score(y_test, knn_y_pred)
-model_performance['9. K-Nearest Neighbors Regression'] = {'MSE': knn_mse, 'R-squared': knn_r2}
-
-# Bayesian Regression
-bayesian_model = BayesianRidge()
-bayesian_model.fit(X_train, y_train)
-bayesian_y_pred = bayesian_model.predict(X_test)
-bayesian_mse = mean_squared_error(y_test, bayesian_y_pred)
-bayesian_r2 = r2_score(y_test, bayesian_y_pred)
-model_performance['10. Bayesian Regression'] = {'MSE': bayesian_mse, 'R-squared': bayesian_r2}
+model_performance['5. K-Nearest Neighbors Regression'] = {'MSE': knn_mse, 'R-squared': knn_r2}
 
 # Neural Network Regression
 nn_model = MLPRegressor(max_iter=1000)
@@ -221,15 +167,7 @@ nn_model.fit(X_train, y_train)
 nn_y_pred = nn_model.predict(X_test)
 nn_mse = mean_squared_error(y_test, nn_y_pred)
 nn_r2 = r2_score(y_test, nn_y_pred)
-model_performance['11. Neural Network Regression'] = {'MSE': nn_mse, 'R-squared': nn_r2}
-
-# Gradient Boosting Regression
-gb_model = GradientBoostingRegressor()
-gb_model.fit(X_train, y_train)
-gb_y_pred = gb_model.predict(X_test)
-gb_mse = mean_squared_error(y_test, gb_y_pred)
-gb_r2 = r2_score(y_test, gb_y_pred)
-model_performance['12. Gradient Boosting Regression'] = {'MSE': gb_mse, 'R-squared': gb_r2}
+model_performance['6. Neural Network Regression'] = {'MSE': nn_mse, 'R-squared': nn_r2}
 
 # Print model performance
 for model, performance in model_performance.items():
@@ -239,24 +177,18 @@ for model, performance in model_performance.items():
     print()
 ```
 
-12. PLOTTING PREDECTED vs ACTUAL VALUES GRAPH
+PLOTTING PREDECTED vs ACTUAL VALUES GRAPH
 
 ```bash
 # Create a dictionary to store the model performance
 model_performance = {
     'Ridge Regression': {'Predicted': ridge_y_pred, 'Actual': y_test},
     'Lasso Regression': {'Predicted': lasso_y_pred, 'Actual': y_test},
-    'Elastic Net Regression': {'Predicted': elastic_net_y_pred, 'Actual': y_test},
-    'Polynomial Regression': {'Predicted': poly_y_pred, 'Actual': y_test},
     'Decision Tree Regression': {'Predicted': tree_y_pred, 'Actual': y_test},
     'Random Forest Regression': {'Predicted': forest_y_pred, 'Actual': y_test},
-    'Support Vector Regression': {'Predicted': svr_y_pred, 'Actual': y_test},
-    'XGBoost Regression': {'Predicted': xgb_y_pred, 'Actual': y_test},
     'K-Nearest Neighbors Regression': {'Predicted': knn_y_pred, 'Actual': y_test},
-    'Bayesian Regression': {'Predicted': bayesian_y_pred, 'Actual': y_test},
     'Neural Network Regression': {'Predicted': nn_y_pred, 'Actual': y_test},
-    'Gradient Boosting Regression': {'Predicted': gb_y_pred, 'Actual': y_test}
-}
+   }
 
 # Set up figure and axes
 num_models = len(model_performance)
@@ -300,22 +232,16 @@ plt.legend(model_performance.keys(), loc='upper right')
 plt.show()
 ```
 
-13. IT PRINTS REGRESSION MODEL IN ORDER OF PRECISION AND A FINAL RESULT TELLING WHICH REGRESSION MODEL HAS THE MOST PRECISE VALUE AND WHICH REGRESSION MODEL HAS LEAST PRECISE VALUE
+THIS PRINTS REGRESSION MODEL IN ORDER OF PRECISION AND A FINAL RESULT TELLING WHICH REGRESSION MODEL HAS THE MOST PRECISE VALUE AND WHICH REGRESSION MODEL HAS LEAST PRECISE VALUE
 
 ```bash
 # Store the regression models and their scores in a dictionary
 regression_scores = {
-    "Ridge Regression": (ridge_mse, ridge_r2),
-    "Elastic Net Regression": (elastic_net_mse, elastic_net_r2),
-    "Polynomial Regression": (poly_mse, poly_r2),
+    "Ridge Regression": (ridge_mse, ridge_r2), 
     "Random Forest Regression": (forest_mse, forest_r2),
-    "Gradient Boosting Regression": (gb_mse, gb_r2),
     "Decision Tree Regression": (tree_mse, tree_r2),
     "Lasso Regression": (lasso_mse, lasso_r2),
-    "Support Vector Regression": (svr_mse, svr_r2),
-    "XGBoost Regression": (xgb_mse, xgb_r2),
     "K-Nearest Neighbors Regression": (knn_mse, knn_r2),
-    "Bayesian Regression": (bayesian_mse, bayesian_r2),
     "Neural Network Regression": (nn_mse, nn_r2),
 }
 
@@ -337,12 +263,12 @@ print(f"The least precise model is: {least_precise_model}")
 ```
 ## SUMMARY
 - Developed a fully functional Mental Health Fitness Tracker ML model using Python and scikit-learn.
-- Utilized 12 types of regression algorithms to achieve precise results in analyzing and predicting mental fitness levels from over 150 countries.
+- Utilized 6 types of regression algorithms to achieve precise results in analyzing and predicting mental fitness levels from over 150 countries.
 - Cleaned, preprocessed, and engineered features to enhance the model's predictive capabilities.
 - Optimized the model's performance by fine-tuning hyperparameters and implementing ensemble methods, resulting in an impressive accuracy percentage of 98.50%.
 
 
-## REFRENCES
-- Datasets that were user in here were taken from [ourworldindia.org](https://ourworldindata.org/grapher/mental-and-substance-use-as-share-of-disease)
+## REFERENCES
+- Datasets that were used here were taken from [ourworldindia.org](https://ourworldindata.org/grapher/mental-and-substance-use-as-share-of-disease)
 
-- This project was made during my internship period for [Edunet Foundation](https://edunetfoundation.org) in association with [IBM SkillsBuild](https://skillsbuild.org) and [AICTE](https://internship.aicte-india.org)
+- This project was made during my internship period for [IBM SkillsBuild](https://skillsbuild.org) in association with [AICTE](https://internship.aicte-india.org)
